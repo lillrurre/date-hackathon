@@ -26,6 +26,10 @@ const (
 	cancelPath  = "cancel"
 )
 
+type BadResponse struct {
+	Message string `json:"error"`
+}
+
 type Input struct {
 	Prompt string `json:"prompt"`
 	System string `json:"-"`
@@ -114,20 +118,21 @@ func handleQuestion(logger *slog.Logger, client *client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job, err := client.askChatBot(r.Body)
 		if err != nil {
-			if err := encode[string](w, http.StatusInternalServerError, `{"error": "failed to decode body"}`); err != nil {
+			logger.With("error", err).Error("ask client")
+			if err = encode(w, http.StatusInternalServerError, BadResponse{Message: "failed to decode body"}); err != nil {
 				logger.With("error", err).Error("encoding failed")
 			}
 			return
 		}
 		if job.Output.Done {
-			if err := encode[*Job](w, http.StatusOK, job); err != nil {
+			if err = encode(w, http.StatusOK, job); err != nil {
 				logger.With("error", err).Error("encoding failed")
 			}
 			return
 		}
 		job, err = client.pollChatBot(job)
 		if err != nil {
-			if err := encode[string](w, http.StatusInternalServerError, `{"error": "client unresponsive"}`); err != nil {
+			if err := encode(w, http.StatusInternalServerError, BadResponse{Message: "client unresponsive"}); err != nil {
 				logger.With("error", err).Error("encoding failed")
 			}
 		}
@@ -148,7 +153,7 @@ func (c *client) askChatBot(body io.Reader) (job *Job, err error) {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	req.Header.Add("Authorization", "Bearer "+c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -159,8 +164,8 @@ func (c *client) askChatBot(body io.Reader) (job *Job, err error) {
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("http request failed, status code %d", resp.StatusCode)
 	}
-
-	if err := json.NewDecoder(resp.Body).Decode(job); err != nil {
+	job = new(Job)
+	if err := json.NewDecoder(resp.Body).Decode(&job); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
 
@@ -168,7 +173,7 @@ func (c *client) askChatBot(body io.Reader) (job *Job, err error) {
 }
 
 func (c *client) pollChatBot(pending *Job) (job *Job, err error) {
-	if job.Output.Done {
+	if pending.Output.Done {
 		return job, nil
 	}
 
@@ -181,7 +186,7 @@ func (c *client) pollChatBot(pending *Job) (job *Job, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	req.Header.Add("Authorization", "Bearer "+c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
 
 	do := func(c http.Client, r *http.Request) (*Job, error) {
@@ -191,7 +196,7 @@ func (c *client) pollChatBot(pending *Job) (job *Job, err error) {
 		}
 		defer resp.Body.Close()
 		var j *Job
-		if err := json.NewDecoder(resp.Body).Decode(&job); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&j); err != nil {
 			return nil, fmt.Errorf("json decode: %w", err)
 		}
 		return j, nil
