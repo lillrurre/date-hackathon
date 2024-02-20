@@ -1,5 +1,7 @@
 # A surprisingly good chatbot for DATE25. 
 
+[![Pipeline](https://github.com/lillrurre/date-hackathon/actions/workflows/pipeline.yml/badge.svg)](https://github.com/lillrurre/date-hackathon/actions/workflows/pipeline.yml)
+
 ### ChatBot
 
 The chatbot is an LLM hosted on RunPod using `tinyllama`.
