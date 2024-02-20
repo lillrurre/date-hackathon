@@ -9,7 +9,7 @@ primary_region = 'arn'
 [build]
   [build.args]
     BP_GO_BUILD_LDFLAGS = "-s -w -X main.version=$VERSION"
-    BP_GO_TARGETS = "."
+    BP_GO_TARGETS = "./cmd/backend"
 
 [http_service]
   internal_port = 8080
