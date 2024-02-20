@@ -15,7 +15,7 @@ ARG VERSION
 
 ENV GOCACHE=/root/.cache/go-build
 RUN --mount=type=cache,target="/root/.cache/go-build
-RUN go build -ldflags="-w -s -X main.version=$VERSION" -o backend .
+RUN go build -ldflags="-w -s -X main.version=$VERSION" -o backend ./cmd/backend
 
 FROM gcr.io/distroless/static-debian12:nonroot
 
