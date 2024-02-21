@@ -49,28 +49,21 @@ func main() {
 func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 	logger = logger.With("handler", "job")
 	return func(w http.ResponseWriter, r *http.Request) {
-		job, err := client.RunRequest(r.Body)
+		job, err := client.RunSyncRequest(r.Body)
 		if err != nil {
 			logger.With("error", err).Error("ask client")
 			_ = encode(w, http.StatusInternalServerError, BadResponse{Message: "failed to decode body"})
 			return
 		}
-		if job.Output.Done {
-			_ = encode(w, http.StatusOK, job)
-			return
-		}
-		job, err = client.StatusRequest(job)
-		if err != nil {
-			logger.With("error", err).Error("poll client")
-			_ = encode(w, http.StatusInternalServerError, BadResponse{Message: "client unresponsive"})
-			return
-		}
-		_ = encode[*runpod.Job](w, http.StatusOK, job)
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		_ = encode(w, http.StatusOK, job)
 	}
 }
 
 func encode[T any](w http.ResponseWriter, status int, v T) (err error) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		return fmt.Errorf("encode json: %w", err)
