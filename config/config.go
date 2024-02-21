@@ -15,6 +15,6 @@ func LoadConfig() *Config {
 	return &Config{
 		ApiKey:         os.Getenv("BOT_API_KEY"),
 		Url:            os.Getenv("BOT_URL"),
-		RequestTimeout: time.Second * 3,
+		RequestTimeout: time.Second * 10,
 	}
 }
