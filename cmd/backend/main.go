@@ -51,6 +51,9 @@ func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job, err := client.RunSyncRequest(r.Body)
 		if err != nil {
+			if job != nil {
+				_, _ = client.CancelRequest(job)
+			}
 			logger.With("error", err).Error("ask client")
 			_ = encode(w, http.StatusInternalServerError, BadResponse{Message: "failed to decode body"})
 			return
