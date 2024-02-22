@@ -10,6 +10,12 @@ The chatbot is an LLM hosted on RunPod using `tinyllama`.
 
 The backend is a simple Go server that interacts with the chatbot to separate the logic from the frontend.
 
+**Run locally**
+
+```bash
+go run ./cmd/dummy
+```
+
 ### Frontend
 
 Nothing so far
