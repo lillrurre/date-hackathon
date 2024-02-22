@@ -59,7 +59,6 @@ func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		_ = encode(w, http.StatusOK, job)
 	}
 }
