@@ -37,7 +37,7 @@
 <script>
   const terminal = document.getElementById("terminal");
   const commandInput = document.getElementById("command-input");
-  let usesLeft = 1;
+  let usesLeft = 0;
 
   // File system
   let files = [
@@ -172,7 +172,7 @@
     }
   });
 
-  function executeCommand(command) {
+  async function executeCommand(command) {
     const output = document.createElement("p");
     output.textContent = `dateit@donkero $ ${command}`;
     terminal.appendChild(output);
@@ -218,7 +218,12 @@
           result.push("You have: " + dateBot(currentCommand) + " uses left!");
           break;
         case "ask":
-          result.push(ask(currentCommand));
+          ask(currentCommand).then(data => {
+            console.log(data)
+            printOutput("🤖 >>> " + data); // Update interface with received data
+          }).catch(error => {
+            printOutput("🤖 >>> något gick fel..."); // Update interface with received data
+          });
           break;
         case "albin":
           result.push("Albin har bra bas");
@@ -235,34 +240,38 @@
     result.forEach((line) => printOutput(line));
   }
 
-  function ask(command) {
-    if (usesLeft === 0) {
-      return 'You have no usages left!'
+  async function ask(command) {
+    if (usesLeft <= 0) {
+      return 'You have no usages left!';
     }
     usesLeft--;
-    fetch('https://date-hackathon.fly.dev/job', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: command,
+
+    try {
+      const response = await fetch('https://date-hackathon.fly.dev/job', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    }).then(resp => {
-      if (!resp.ok) {
+        body: JSON.stringify({
+          input: {
+            prompt: command.slice(1).join(' '),
+          },
+        }),
+      });
+
+      if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      return resp.json();
-    }).then(data => {
-      console.log(data)
-    }).catch(error => {
+
+      const data = await response.json();
+      console.log(data);
+      return data.output.response;
+    } catch (error) {
       console.error('There was a problem with your fetch operation:', error);
-      return 'Botten är på lunchpaus'
-    })
-    return `You asked: ${command.slice(1).join(' ')}`;
+      return 'Botten är på lunchpaus';
+    }
   }
+
 
   function grep(input, searchQuery) {
     const output = [];
@@ -318,7 +327,9 @@
     terminal.scrollTop = terminal.scrollHeight;
   }
 
-  printOutput("Välkommen till DATEBOT");
+  printOutput("> Välkommen till DATEBOT 🦧");
+  printOutput("> Före jag svarar på dina frågor måste du bekräfta att du är en människa");
+  printOutput("> skriv help för att få hjälp");
 </script>
 </body>
 </html>
