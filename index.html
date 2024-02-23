@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terminal Emulator</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: monospace;
+      font-size: 16px;
+      padding: 20px;
+    }
+    #terminal {
+      border: 1px solid white;
+      padding: 10px;
+      width: 80%;
+      height: 400px;
+      overflow-y: scroll;
+      margin-bottom: 20px;
+    }
+    #command-input {
+      width: calc(100% - 22px);
+      background: none;
+      border: none;
+      color: white;
+      font-family: monospace;
+      font-size: 16px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+<div id="terminal"></div>
+<input id="command-input" type="text" placeholder="dateit@donkero $ " />
+<script>
+  const terminal = document.getElementById("terminal");
+  const commandInput = document.getElementById("command-input");
+  let usesLeft = 1;
+
+  // File system
+  let files = [
+    {name: "readme.md", content: `
+      # Date ChatBot
+
+      Welcome to Date ChatBot! I am a chatbot that can help you with your date-related questions.
+      Due to high demand, you must verify that you are a memeber of the Datateknologerna to use my services.
+
+      ### Usage
+
+      There are two ways to verify your membership:
+      1. doing it the harder way - this will grant you access to 10 uses of my services
+      2. doing it the easier way - this will grant you access to 5 uses of my services
+
+      #### The harder way
+      To verify yourself the harder way, you need to find a secret command hidden in a file on this system.
+      The secret may be challenging to find if you do not use the grep command.
+
+      If you struggle to find the answer in the file, you can cat the file called "readme-hard.txt" to find the secret command.
+
+      #### The easier way
+      cat the file called "readme-easy.txt" to find the secret command.
+    `
+    },
+    {
+      name: "readme-easy.txt",
+      content: `
+      The secret command is to run: date-bot --donkero true --years 25
+      `
+    },
+    {
+      name: "readme-hard.txt",
+      content: `
+      1. Who should use the chat...
+      2. Something we are celebrating...
+      3. A program that should be executed...
+      `
+    },
+    {
+      name: "links.txt",
+      content: `
+      https://datateknologerna.org/
+      `
+    },
+    {
+      name: "file-banana",
+      content: `
+      https://www.youtube.com/watch?app=desktop&v=od_PmtmMDV0
+      `
+    },
+    {
+      name: "date25",
+      content: `
+      https://soundcloud.com/whiteflaco/date25?ref=clipboard&p=i&c=0&si=5962C8B84B104A22BD2DA50E6CD3A60E&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+      `
+    },
+    {
+      name: "file-do-not-open",
+      content: `
+      https://www.youtube.com/watch?v=mx86-rTclzA
+      `
+    },
+    {
+      name: "foo",
+      content: `
+      bar
+      `
+    },
+    {
+      name: "index.html", content: `<!doctype html>
+               <head>
+                 <meta charset="UTF-8" />
+                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                 <title>DATE25</title>
+               </head>
+               <body>
+               <h1>DATE25</h1>
+                 <script>
+                 function hello() {
+                   alert("Hello, DATE25!");
+                 }
+                 < /script>
+               </body>
+             </html>`
+    },
+
+    {
+      name: "date.log",
+      content: `
+      Once upon a time, in the bustling city of Datatown, there lived a legendary figure known as Albin. He was not
+      just an ordinary member of the Datateknologerna, but a revered and enigmatic character whose name echoed through the
+      halls of the tech community.
+      Albin was said to possess extraordinary coding skills, unparalleled problem-solving abilities, and a keen intuition for
+      deciphering complex algorithms. His legend grew with each passing day, as tales of his exploits spread far and wide
+      across the digital landscape.
+      It was said that Albin could write code so elegant that it danced across the screen like poetry in motion. His
+      algorithms were the envy of his peers, and his solutions to seemingly impossible problems left even the most seasoned
+      programmers in awe.
+      But Albin was more than just a master of code; he was also a guardian of knowledge, always willing to share his wisdom
+      and expertise with those who sought his guidance. Many aspiring technologists flocked to him, eager to learn from the
+      best and to bask in the glow of his brilliance.
+      One day, a great challenge descended upon Datatown. A malicious hacker known only as the Shadow had infiltrated the
+      city's network, threatening to unleash chaos and destruction upon its digital infrastructure. The citizens of Datatown
+      turned to Albin for help, knowing that only he had the skills and knowledge to thwart the Shadow's nefarious plans.
+      With steely determination, Albin delved deep into the heart of the city's network, his fingers flying across the
+      keyboard with lightning speed. He analyzed lines of code, traced digital footprints, and unraveled the Shadow's
+      intricate web of deception.
+      As the hours turned into days, Albin worked tirelessly, never faltering in his quest to protect Datatown from harm. And
+      finally, after a long and arduous battle, he emerged victorious, his code locking the Shadow out of the network for
+      good.
+      The people of Datatown cheered and celebrated their hero, hailing Albin as the savior of their digital realm. His legend
+      grew even greater, his name spoken with reverence and admiration by all who knew of his deeds.
+      But amidst the jubilation, there was one mystery that remained unsolved: the secret of Albin's true identity. For
+      despite his heroic actions and his immense contributions to the community, Albin remained a figure shrouded in mystery,
+      his true face hidden behind a veil of anonymity.
+      And so, the legend of Albin from Datateknologerna lived on, a timeless tale of bravery, skill, and the power of
+      knowledge to overcome even the greatest of challenges. And somewhere, hidden within the annals of history, the word
+      date-bot remained, a silent tribute to the hero who had saved Datatown from disaster.
+
+      Amidst the mysteries of Datatown, whispers lingered of the secret Albin held close,
+      a puzzle waiting for the curious to unlock. And within the depths of his code lay a clue, a cryptic message revealing the truth: number 25".
+      `
+    },
+  ];
+
+  commandInput.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      executeCommand(this.value);
+      this.value = "";
+    }
+  });
+
+  function executeCommand(command) {
+    const output = document.createElement("p");
+    output.textContent = `dateit@donkero $ ${command}`;
+    terminal.appendChild(output);
+
+    const commands = command.split(" | ");
+    let result = [];
+
+    for (let i = 0; i < commands.length; i++) {
+      const currentCommand=commands[i].trim().split(" ");
+      switch (currentCommand[0]) {
+        case "cat":
+          const fileName=currentCommand[1];
+          const file=files.find((f)=> f.name === fileName);
+          if (file) {
+            result.push(file.content);
+          } else {
+            result.push(`File '${fileName}' not found.`);
+          }
+          break;
+        case "grep":
+          if (result.length === 0) {
+            printOutput("No input to pipe.");
+            return;
+          }
+          const searchQuery = currentCommand[1];
+          result = grep(result, searchQuery);
+          break;
+        case "ls":
+          printOutput(files.map(file => file.name).join("\n"));
+          break;
+        case "help":
+          printOutput("List of available commands: help, ask, cat, grep, ls, sed (not working), and some secret command ;)");
+          break;
+        case "sed":
+          if (result.length === 0) {
+            printOutput("No input to pipe.");
+            return;
+          }
+          const sedPattern = currentCommand.slice(1).join(" ");
+          result = sed(result, sedPattern);
+          break;
+        case "date-bot":
+          result.push("You have: " + dateBot(currentCommand) + " uses left!");
+          break;
+        case "ask":
+          result.push(ask(currentCommand));
+          break;
+        case "albin":
+          result.push("Albin har bra bas");
+          break;
+        case "donkero":
+          result.push("En farlig dryck")
+          break;
+        default:
+          printOutput(`Något gick fel, försök igen: ${currentCommand[0]}`);
+          return;
+      }
+    }
+
+    result.forEach((line) => printOutput(line));
+  }
+
+  function ask(command) {
+    if (usesLeft === 0) {
+      return 'You have no usages left!'
+    }
+    usesLeft--;
+    fetch('https://date-hackathon.fly.dev/job', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: command,
+        },
+      }),
+    }).then(resp => {
+      if (!resp.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return resp.json();
+    }).then(data => {
+      console.log(data)
+    }).catch(error => {
+      console.error('There was a problem with your fetch operation:', error);
+      return 'Botten är på lunchpaus'
+    })
+    return `You asked: ${command.slice(1).join(' ')}`;
+  }
+
+  function grep(input, searchQuery) {
+    const output = [];
+    for (const line of input) {
+      const words = line.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        if (words[i].includes(searchQuery)) {
+          const before = i > 0 ? words[i - 1] : "";
+          const after = i < words.length - 1 ? words[i + 1] : "";
+          output.push(`${before} ${words[i]} ${after}`);
+        }
+      }
+    }
+    return output;
+  }
+
+  function dateBot(args) {
+    // Check if arguments include '--donkero true' and '--years 25'
+    if (args.includes('--donkero') && args.includes('--years') && args[args.indexOf('--donkero') + 1] === 'true') {
+      const yearsIndex = args.indexOf('--years');
+      const yearsValue = parseInt(args[yearsIndex + 1]);
+      if (!isNaN(yearsValue) && yearsValue === 25) {
+        usesLeft = 5;
+      }
+    }
+
+    // Check if arguments include 'user Albin' and 'number 25'
+    if (args.includes('user') && args.includes('number')) {
+      const userIndex = args.indexOf('user');
+      const numberIndex = args.indexOf('number');
+      const userValue = args[userIndex + 1];
+      const numberValue = parseInt(args[numberIndex + 1]);
+      if (userValue === 'Albin' && !isNaN(numberValue) && numberValue === 25) {
+        usesLeft = 10;
+      }
+    }
+    return usesLeft;
+  }
+
+  function sed(input, pattern) {
+    const output=[];
+    for (const line of input) {
+      const replacedLine = line.replace(new RegExp(pattern, "g" ), "" );
+      output.push(replacedLine);
+    }
+    return output;
+  }
+
+  function printOutput(message) {
+    const output = document.createElement("p");
+    output.textContent = message;
+    terminal.appendChild(output);
+    terminal.scrollTop = terminal.scrollHeight;
+  }
+
+  printOutput("Välkommen till DATEBOT");
+</script>
+</body>
+</html>
