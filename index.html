@@ -215,7 +215,7 @@
           result = sed(result, sedPattern);
           break;
         case "date-bot":
-          result.push("You have: " + dateBot(currentCommand) + " uses left!");
+          result.push("You have: " + dateBot(currentCommand) + " uses left! type 'ask' followed by anything to use the bot");
           break;
         case "ask":
           ask(currentCommand).then(data => {
