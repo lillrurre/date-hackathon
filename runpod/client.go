@@ -1,6 +1,7 @@
 package runpod
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,21 +19,23 @@ const (
 )
 
 type Client struct {
-	apiKey string
-	url    string
-	client *http.Client
-	logger *slog.Logger
+	apiKey       string
+	url          string
+	systemPrompt string
+	client       *http.Client
+	logger       *slog.Logger
 }
 
-func NewClient(logger *slog.Logger, baseUrl, apiKey string, requestTimeout time.Duration) *Client {
+func NewClient(logger *slog.Logger, baseUrl, apiKey, systemPrompt string, requestTimeout time.Duration) *Client {
 	c := &http.Client{}
 	c.Timeout = requestTimeout
 
 	return &Client{
-		client: c,
-		apiKey: apiKey,
-		url:    baseUrl,
-		logger: logger.With("component", "client"),
+		client:       c,
+		apiKey:       apiKey,
+		url:          baseUrl,
+		systemPrompt: systemPrompt,
+		logger:       logger.With("component", "client"),
 	}
 }
 
@@ -44,8 +47,13 @@ func (c *Client) RunRequest(body io.Reader) (job *Job, err error) {
 	return doRequest(c.client, req)
 }
 
-func (c *Client) RunSyncRequest(body io.Reader) (job *Job, err error) {
-	req, err := c.newRequest(body, http.MethodPost, runSyncPath)
+func (c *Client) RunSyncRequest(j *Job) (job *Job, err error) {
+	j.Input.System = c.systemPrompt
+	b, err := json.Marshal(j)
+	if err != nil {
+		return nil, fmt.Errorf("failed to json marshal: %w", err)
+	}
+	req, err := c.newRequest(bytes.NewReader(b), http.MethodPost, runSyncPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

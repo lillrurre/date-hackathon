@@ -27,7 +27,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	logger = logger.With("version", version)
 
-	client := runpod.NewClient(logger, conf.Url, conf.ApiKey, conf.RequestTimeout)
+	client := runpod.NewClient(logger, conf.Url, conf.ApiKey, conf.SystemPrompt, conf.RequestTimeout)
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -61,7 +61,11 @@ func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 	logger = logger.With("handler", "job")
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("request received")
-		job, err := client.RunSyncRequest(r.Body)
+		var j *runpod.Job
+		if err := json.NewDecoder(r.Body).Decode(&j); err != nil {
+			logger.With("error", err).Error("failed to decode json")
+		}
+		job, err := client.RunSyncRequest(j)
 		if err != nil {
 			if job != nil {
 				_, _ = client.CancelRequest(job)
