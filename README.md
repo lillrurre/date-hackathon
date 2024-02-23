@@ -1,4 +1,4 @@
-# A surprisingly good chatbot for DATE25. 
+# A surprisingly (not)good chatbot for DATE25. 
 
 [![Pipeline](https://github.com/lillrurre/date-hackathon/actions/workflows/pipeline.yml/badge.svg)](https://github.com/lillrurre/date-hackathon/actions/workflows/pipeline.yml)
 
@@ -18,4 +18,4 @@ go run ./cmd/dummy
 
 ### Frontend
 
-Nothing so far
+Some stuff generated with GPT and Mistral
