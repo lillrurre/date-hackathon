@@ -19,3 +19,8 @@ go run ./cmd/dummy
 ### Frontend
 
 Some stuff generated with GPT and Mistral
+
+
+***
+
+**Check [cheat.md](cheat.md) for cheats.**
