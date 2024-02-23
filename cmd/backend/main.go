@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/lillrurre/date-hackathon-backend/config"
 	"github.com/lillrurre/date-hackathon-backend/runpod"
 	"log/slog"
@@ -27,8 +29,17 @@ func main() {
 
 	client := runpod.NewClient(logger, conf.Url, conf.ApiKey, conf.RequestTimeout)
 
-	r := http.NewServeMux()
-	r.HandleFunc("POST /job", handleJob(logger, client))
+	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders: []string{"Link"},
+		MaxAge:         300,
+		Debug:          true,
+	}))
+	r.Handle("POST /job", handleJob(logger, client))
+
 	go func() {
 		if err := http.ListenAndServe(":8080", r); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
@@ -49,6 +60,7 @@ func main() {
 func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 	logger = logger.With("handler", "job")
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("request received")
 		job, err := client.RunSyncRequest(r.Body)
 		if err != nil {
 			if job != nil {
@@ -58,7 +70,6 @@ func handleJob(logger *slog.Logger, client *runpod.Client) http.HandlerFunc {
 			_ = encode(w, http.StatusInternalServerError, BadResponse{Message: "failed to decode body"})
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
 		_ = encode(w, http.StatusOK, job)
 	}
 }
